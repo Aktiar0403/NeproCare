@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NephroCare Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body class="bg-gray-50">
+  <!-- Auth Bar -->
+  <header class="p-4 bg-white shadow flex items-center justify-between">
+    <h1 class="font-bold text-xl">🩺 NephroCare Pro</h1>
+    <div id="auth-bar" class="space-x-2">
+      <input id="email" type="email" placeholder="doctor@email.com" class="border p-1 rounded" />
+      <input id="password" type="password" placeholder="password" class="border p-1 rounded" />
+      <button id="login-btn" class="px-3 py-1 bg-blue-600 text-white rounded">Login</button>
+      <button id="logout-btn" class="px-3 py-1 bg-gray-200 rounded hidden">Logout</button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <main class="max-w-6xl mx-auto p-4" x-data="{ tab: 'info' }">
+    <nav class="flex gap-2 mb-4 flex-wrap">
+      <button class="tab" :class="{ 'tab-active': tab==='info' }" @click="tab='info'">👤 Info</button>
+      <button class="tab" :class="{ 'tab-active': tab==='vitals' }" @click="tab='vitals'">🫀 Vitals</button>
+      <button class="tab" :class="{ 'tab-active': tab==='symptoms' }" @click="tab='symptoms'">🤒 Symptoms</button>
+      <button class="tab" :class="{ 'tab-active': tab==='labs' }" @click="tab='labs'">🧪 Labs</button>
+      <button class="tab" :class="{ 'tab-active': tab==='history' }" @click="tab='history'">📜 History</button>
+      <button class="tab" :class="{ 'tab-active': tab==='imaging' }" @click="tab='imaging'">🩻 Imaging</button>
+      <button class="tab" :class="{ 'tab-active': tab==='advanced' }" @click="tab='advanced'">🔬 Advanced</button>
+      <button class="tab" :class="{ 'tab-active': tab==='output' }" @click="tab='output'">📄 Output</button>
+    </nav>
+
+    <form id="visit-form" class="space-y-4">
+      <!-- Info -->
+      <section x-show="tab==='info'" class="card">
+        <h2 class="section-title">Patient Info</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="field">Name <input id="patient_name" class="input"></label>
+          <label class="field">Age <input id="patient_age" type="number" class="input"></label>
+          <label class="field">Sex
+            <select id="patient_sex" class="input">
+              <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <!-- Vitals -->
+      <section x-show="tab==='vitals'" class="card">
+        <h2 class="section-title">Vitals</h2>
+        <div class="grid md:grid-cols-4 gap-3">
+          <label class="field">BP (systolic) <input id="bp_sys" type="number" class="input"></label>
+          <label class="field">BP (diastolic) <input id="bp_dia" type="number" class="input"></label>
+          <label class="field">HR <input id="hr" type="number" class="input"></label>
+          <label class="field">SpO₂ <input id="spo2" type="number" class="input"></label>
+        </div>
+      </section>
+
+      <!-- Symptoms -->
+      <section x-show="tab==='symptoms'" class="card">
+        <h2 class="section-title">Symptoms</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="field">Edema <select id="sym_edema" class="input"><option>No</option><option>Mild</option><option>Severe</option></select></label>
+          <label class="field">Oliguria <select id="sym_oliguria" class="input"><option>No</option><option>Yes</option></select></label>
+          <label class="field">Hematuria <select id="sym_hematuria" class="input"><option>No</option><option>Microscopic</option><option>Gross</option></select></label>
+        </div>
+      </section>
+
+      <!-- Labs -->
+      <section x-show="tab==='labs'" class="card">
+        <h2 class="section-title">Labs</h2>
+        <div class="grid md:grid-cols-4 gap-3">
+          <label class="field">Creatinine (mg/dL) <input id="creatinine" type="number" step="0.01" class="input"></label>
+          <label class="field">eGFR (mL/min/1.73m²) <input id="egfr" type="number" step="0.1" class="input"></label>
+          <label class="field">ACR (mg/g) <input id="acr" type="number" step="0.1" class="input"></label>
+          <label class="field">Potassium (mEq/L) <input id="k" type="number" step="0.1" class="input"></label>
+        </div>
+      </section>
+
+      <!-- History -->
+      <section x-show="tab==='history'" class="card">
+        <h2 class="section-title">History</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="field">Diabetes <select id="hx_dm" class="input"><option>No</option><option>Yes</option></select></label>
+          <label class="field">Hypertension <select id="hx_htn" class="input"><option>No</option><option>Yes</option></select></label>
+          <label class="field">Drug Nephrotoxins <select id="hx_drugs" class="input"><option>No</option><option>Yes</option></select></label>
+        </div>
+      </section>
+
+      <!-- Imaging -->
+      <section x-show="tab==='imaging'" class="card">
+        <h2 class="section-title">Imaging</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="field">Kidney Size <input id="usg_size" class="input"></label>
+          <label class="field">Echogenicity
+            <select id="usg_echo" class="input">
+              <option value="">Select</option>
+              <option>Normal</option>
+              <option>Mildly increased</option>
+              <option>Markedly increased</option>
+            </select>
+          </label>
+          <label class="field">Obstruction <select id="usg_obstruction" class="input"><option>No</option><option>Yes</option></select></label>
+        </div>
+      </section>
+
+      <!-- Advanced -->
+      <section x-show="tab==='advanced'" class="card">
+        <h2 class="section-title">Advanced Tests</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="field">ANA <select id="adv_ana" class="input"><option>Unknown</option><option>Positive</option><option>Negative</option></select></label>
+          <label class="field">C3 <input id="adv_c3" class="input"></label>
+          <label class="field">Biopsy <select id="adv_biopsy" class="input"><option>No</option><option>Planned</option><option>Done</option></select></label>
+        </div>
+      </section>
+
+      <!-- Output -->
+      <section x-show="tab==='output'" class="card">
+        <h2 class="section-title">AI Diagnosis & Prescription</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <h3 class="font-semibold">Doctor Diagnosis</h3>
+            <pre id="doctor-diagnosis" class="output"></pre>
+            <h3 class="font-semibold mt-4">Patient-Friendly Explanation</h3>
+            <pre id="patient-diagnosis" class="output"></pre>
+            <div id="missing-fields" class="text-yellow-700 text-sm mt-2"></div>
+          </div>
+          <div>
+            <h3 class="font-semibold">Prescription</h3>
+            <div class="flex gap-2 mb-2">
+              <input id="add-medicine" class="input flex-1" placeholder="Add medicine by brand/composition" />
+              <button id="add-medicine-btn" type="button" class="btn">Add</button>
+            </div>
+            <div id="medicine-output" class="pillbox"></div>
+            <h4 class="font-semibold mt-4">Tests</h4>
+            <div class="flex gap-2 mb-2">
+              <input id="add-test" class="input flex-1" placeholder="Add test" />
+              <button id="add-test-btn" type="button" class="btn">Add</button>
+            </div>
+            <div id="test-output" class="pillbox"></div>
+            <button id="save-visit" type="button" class="btn w-full mt-4">💾 Save Visit</button>
+            <button id="print-prescription" type="button" class="btn-outline w-full mt-2">🖨️ Export PDF</button>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <h3 class="font-semibold">ML Suggestions</h3>
+          <div id="ml-suggestions" class="text-sm text-gray-800"></div>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <!-- Hidden Printable -->
+  <div id="printable-prescription" class="hidden p-4 text-sm">
+    <h2 class="text-xl font-bold mb-2">📝 Prescription Summary</h2>
+    <p><strong>Date:</strong> <span id="print-date"></span></p>
+    <p><strong>Patient:</strong> <span id="print-patient-name"></span>, <span id="print-patient-age"></span> y/o</p>
+    <h3 class="mt-4 text-lg font-semibold">Doctor's Diagnosis</h3>
+    <div id="print-doctor-diagnosis" class="whitespace-pre-wrap"></div>
+    <h3 class="mt-4 text-lg font-semibold">Prescription</h3>
+    <ul id="print-medicines"></ul>
+    <h3 class="mt-4 text-lg font-semibold">Tests</h3>
+    <ul id="print-tests"></ul>
+  </div>
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- app modules (ESM order matters) -->
+  <script type="module" src="./js/firebase.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/diagnosis.js"></script>
+  <script type="module" src="./js/medicines.js"></script>
+  <script type="module" src="./js/inputhints.js"></script>
+  <script type="module" src="./js/html2pdf.js"></script>
+  <script type="module" src="./js/ml.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

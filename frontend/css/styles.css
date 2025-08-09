@@ -1,0 +1,13 @@
+.tab { @apply px-3 py-1 rounded bg-gray-200 hover:bg-gray-300; }
+.tab-active { @apply bg-blue-600 text-white; }
+.card { @apply bg-white shadow p-4 rounded-xl; }
+.section-title { @apply font-semibold text-lg mb-2; }
+.field { @apply text-sm space-y-1; }
+.input { @apply w-full border rounded p-2; }
+.btn { @apply px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700; }
+.btn-outline { @apply px-3 py-2 border rounded; }
+.output { @apply bg-gray-50 p-3 rounded border min-h-[80px]; }
+.pill { @apply inline-flex items-center gap-2 bg-gray-200 px-2 py-1 rounded-full mr-2 mb-2; }
+.pillbox { @apply min-h-[40px]; }
+.pill .remove { @apply cursor-pointer; }
+.hidden { display:none; }
