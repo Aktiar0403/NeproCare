@@ -1,15 +1,19 @@
 // frontend/js/auth.js
-import { auth, db } from "./firebase.js";
+import { app, db } from "./firebase.js"; // make sure firebase.js is the real one with initializeApp(...)
 import {
+  getAuth,               // ⬅️ use getAuth here
   signInWithEmailAndPassword,
-  onAuthStateChanged,
+  onAuthStateChanged,    // from modular SDK
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-import {
-  doc, getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+// ✅ Create a real Auth instance from the initialized app
+const auth = getAuth(app);
+
+// (rest of your file stays the same…)
 
 // --- DOM refs
 const bar       = document.getElementById("auth-bar");
