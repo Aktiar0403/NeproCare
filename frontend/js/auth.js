@@ -115,3 +115,10 @@ onAuthStateChanged(auth, async (user) => {
   const role = await fetchUserRole(user.uid); // requires users/{uid}.role set by admin
   setLoggedInUI(user, role);
 });
+if (role === 'user') {
+  const note = document.getElementById('auth-note');
+  if (note) {
+    note.textContent = "Read-only access (user). Doctors can save visits.";
+    note.style.color = "#2563eb";
+  }
+}
