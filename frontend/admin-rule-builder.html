@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin — Rule Builder | NephroCare Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem; }
+    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem; }
+    .card  { background:white; border:1px solid #e5e7eb; border-radius:0.75rem; padding:1rem; }
+    .btn   { padding:0.5rem 0.75rem; border-radius:0.5rem; }
+    .btn-p { background:#2563eb; color:white; }
+    .btn-s { background:#fff; border:1px solid #d1d5db; }
+    .pill  { background:#eef2ff; padding:0.25rem 0.5rem; border-radius:999px; font-size:12px; }
+    .muted { color:#6b7280; font-size:12px; }
+    textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+  <div class="max-w-5xl mx-auto space-y-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-xl font-bold">Admin — Rule Builder</h1>
+      <div id="roleBadge" class="pill">Checking role…</div>
+    </div>
+
+    <!-- Top controls -->
+    <div class="card">
+      <div class="grid2">
+        <div>
+          <label class="block text-sm font-medium">Rule Type</label>
+          <select id="ruleType" class="mt-1 w-full border rounded p-2">
+            <option value="multi">Diagnosis (multi-conditions)</option>
+            <option value="single">Diagnosis (single condition)</option>
+            <option value="flag">Flag (alerts, non-diagnostic)</option>
+            <option value="validator">Validator (input plausibility)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Rule ID (document id)</label>
+          <input id="ruleId" class="mt-1 w-full border rounded p-2" placeholder="ckd_stage_3 (leave empty to auto-generate)" />
+        </div>
+      </div>
+
+      <div class="grid2 mt-3">
+        <div>
+          <label class="block text-sm font-medium">Label (title)</label>
+          <input id="label" class="mt-1 w-full border rounded p-2" placeholder="CKD Stage 3" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Mutex Group (optional)</label>
+          <input id="mutexGroup" class="mt-1 w-full border rounded p-2" placeholder="ckd_stage" />
+          <div class="muted mt-1">Rules in the same group compete; top score wins, others marked “consider”.</div>
+        </div>
+      </div>
+
+      <div class="grid3 mt-3">
+        <div>
+          <label class="block text-sm font-medium">Priority (0–100)</label>
+          <input id="priority" type="number" class="mt-1 w-full border rounded p-2" value="60" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Base Score (0–1)</label>
+          <input id="baseScore" type="number" step="0.05" class="mt-1 w-full border rounded p-2" value="0.4" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Min Satisfied (≥1)</label>
+          <input id="minSatisfied" type="number" class="mt-1 w-full border rounded p-2" value="1" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Conditions / Checks -->
+    <div id="diagBox" class="card">
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold">Conditions</h2>
+        <button id="addCond" class="btn btn-s">+ Add Condition</button>
+      </div>
+      <div id="conds" class="space-y-2 mt-3"></div>
+      <div class="muted mt-2">Operators: ==, !=, &gt;, &lt;, &gt;=, &lt;=, in (comma‑separated values)</div>
+    </div>
+
+    <div id="flagBox" class="card hidden">
+      <div class="grid2">
+        <div>
+          <label class="block text-sm font-medium">Severity</label>
+          <select id="flagSeverity" class="mt-1 w-full border rounded p-2">
+            <option>info</option>
+            <option>warning</option>
+            <option>critical</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button id="addFlagCond" class="btn btn-s">+ Add Flag Condition</button>
+        </div>
+      </div>
+      <div id="flagConds" class="space-y-2 mt-3"></div>
+    </div>
+
+    <div id="validatorBox" class="card hidden">
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold">Validator Checks</h2>
+        <button id="addCheck" class="btn btn-s">+ Add Check</button>
+      </div>
+      <div id="checks" class="space-y-2 mt-3"></div>
+      <div class="muted mt-2">Use visit paths like <b>vitals.bp_sys</b>, <b>labs.k</b>, etc. Add min/max.</div>
+    </div>
+
+    <!-- Text blocks -->
+    <div class="card">
+      <div class="grid2">
+        <div>
+          <label class="block text-sm font-medium">Doctor Reason</label>
+          <textarea id="doctorReason" rows="3" class="mt-1 w-full border rounded p-2" placeholder="Clinical rationale..."></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Patient Explanation</label>
+          <textarea id="patientExplanation" rows="3" class="mt-1 w-full border rounded p-2" placeholder="Patient-friendly explanation..."></textarea>
+        </div>
+      </div>
+
+      <div class="grid2 mt-3">
+        <div>
+          <label class="block text-sm font-medium">Recommended Tests (comma‑separated)</label>
+          <input id="recommendedTests" class="mt-1 w-full border rounded p-2" placeholder="ECG, Urine ACR" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Suggested Medicines (comma‑separated)</label>
+          <input id="suggestedMedicines" class="mt-1 w-full border rounded p-2" placeholder="ACE inhibitor, Telmisartan 40mg" />
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <label class="block text-sm font-medium">Follow‑Up Advice</label>
+        <textarea id="followUpAdvice" rows="2" class="mt-1 w-full border rounded p-2" placeholder="Follow up plan..."></textarea>
+      </div>
+    </div>
+
+    <!-- Actions + JSON -->
+    <div class="grid2">
+      <div class="card">
+        <div class="flex gap-2">
+          <button id="saveRule" class="btn btn-p">💾 Save / Update Rule</button>
+          <button id="loadRule" class="btn btn-s">⬇️ Load by ID</button>
+          <button id="newRule"  class="btn btn-s">🆕 New</button>
+          <button id="dupRule"  class="btn btn-s">🧬 Duplicate</button>
+        </div>
+        <div id="status" class="mt-3 muted"></div>
+      </div>
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">JSON Preview</h2>
+          <button id="copyJson" class="btn btn-s">Copy JSON</button>
+        </div>
+        <textarea id="jsonPreview" rows="16" class="mt-2 w-full border rounded p-2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logic -->
+  <script type="module">
+    import { app, db } from "./js/firebase.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import {
+      doc, getDoc, setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const $ = (id)=>document.getElementById(id);
+    const roleBadge = $("roleBadge");
+    const ruleType = $("ruleType");
+    const diagBox = $("diagBox");
+    const flagBox = $("flagBox");
+    const validatorBox = $("validatorBox");
+    const conds = $("conds");
+    const flagConds = $("flagConds");
+    const checks = $("checks");
+    const status = $("status");
+    const jsonPreview = $("jsonPreview");
+
+    function slugify(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"").slice(0,64); }
+    function arrFromCSV(v){ return (v||"").split(",").map(x=>x.trim()).filter(Boolean); }
+    function toNumberOrRaw(v){ return (v===""||v==null) ? v : (isNaN(Number(v)) ? v : Number(v)); }
+
+    function showBoxes(){
+      const t = ruleType.value;
+      diagBox.classList.toggle("hidden", !(t==="single"||t==="multi"));
+      flagBox.classList.toggle("hidden", t!=="flag");
+      validatorBox.classList.toggle("hidden", t!=="validator");
+      refreshPreview();
+    }
+    ruleType.addEventListener("change", showBoxes);
+
+    // ----- Row builders
+    function condRow(container){
+      const row = document.createElement("div");
+      row.className = "grid3";
+      row.innerHTML = `
+        <input placeholder="section (e.g. labs)" class="border rounded p-2 section">
+        <input placeholder="field (e.g. egfr)" class="border rounded p-2 field">
+        <div class="grid3">
+          <select class="border rounded p-2 operator">
+            <option>==</option><option>!=</option><option>&gt;</option><option>&lt;</option>
+            <option>&gt;=</option><option>&lt;=</option><option>in</option>
+          </select>
+          <input placeholder="value (e.g. 60 or a,b)" class="border rounded p-2 value">
+          <input placeholder="weight (0–1)" class="border rounded p-2 weight" type="number" step="0.05">
+        </div>`;
+      container.appendChild(row);
+    }
+    function checkRow(){
+      const row = document.createElement("div");
+      row.className = "grid3";
+      row.innerHTML = `
+        <input placeholder="path (e.g. vitals.bp_sys)" class="border rounded p-2 path">
+        <input placeholder="min" type="number" class="border rounded p-2 min">
+        <input placeholder="max" type="number" class="border rounded p-2 max">`;
+      checks.appendChild(row);
+    }
+
+    $("addCond").addEventListener("click", ()=>condRow(conds));
+    $("addFlagCond").addEventListener("click", ()=>condRow(flagConds));
+    $("addCheck").addEventListener("click", checkRow);
+
+    // Seed one empty row initially
+    condRow(conds); condRow(flagConds); checkRow();
+
+    // ----- Build rule JSON
+    function buildRule(){
+      const type = ruleType.value;
+      const label = $("label").value.trim();
+      const id = $("ruleId").value.trim() || slugify(label);
+      const mutexGroup = $("mutexGroup").value.trim();
+      const priority = Number($("priority").value||0);
+      const baseScore = Number($("baseScore").value||0);
+      const minSatisfied = Number($("minSatisfied").value||1);
+      const doctorReason = $("doctorReason").value.trim();
+      const patientExplanation = $("patientExplanation").value.trim();
+      const recommendedTests = arrFromCSV($("recommendedTests").value);
+      const suggestedMedicines = arrFromCSV($("suggestedMedicines").value);
+      const followUpAdvice = $("followUpAdvice").value.trim();
+
+      const out = { id, label, type };
+
+      if (type==="single" || type==="multi"){
+        const list = [...conds.querySelectorAll(".grid3")].map(r=>{
+          const section = r.querySelector(".section").value.trim();
+          const field   = r.querySelector(".field").value.trim();
+          const operator= r.querySelector(".operator").value.trim();
+          const valueRaw= r.querySelector(".value").value.trim();
+          const weight  = r.querySelector(".weight").value.trim();
+
+          let value = valueRaw;
+          if (operator === "in") value = arrFromCSV(valueRaw);
+          else value = toNumberOrRaw(valueRaw);
+
+          if (!section || !field || !operator || value === "") return null;
+          return { section, field, operator, value, ...(weight ? {weight:Number(weight)} : {}) };
+        }).filter(Boolean);
+
+        out.conditions = list;
+        if (mutexGroup) out.mutexGroup = mutexGroup;
+        if (priority) out.priority = priority;
+        if (baseScore) out.baseScore = baseScore;
+        if (minSatisfied) out.minSatisfied = minSatisfied;
+        if (doctorReason) out.doctorReason = doctorReason;
+        if (patientExplanation) out.patientExplanation = patientExplanation;
+        if (recommendedTests.length) out.recommendedTests = recommendedTests;
+        if (suggestedMedicines.length) out.suggestedMedicines = suggestedMedicines;
+        if (followUpAdvice) out.followUpAdvice = followUpAdvice;
+      }
+      else if (type==="flag"){
+        const list = [...flagConds.querySelectorAll(".grid3")].map(r=>{
+          const section = r.querySelector(".section").value.trim();
+          const field   = r.querySelector(".field").value.trim();
+          const operator= r.querySelector(".operator").value.trim();
+          const valueRaw= r.querySelector(".value").value.trim();
+          let value = (operator==="in") ? arrFromCSV(valueRaw) : toNumberOrRaw(valueRaw);
+        if (!section || !field || !operator || value === "") return null;
+          return { section, field, operator, value };
+        }).filter(Boolean);
+        out.severity = $("flagSeverity").value;
+        out.conditions = list;
+        if (doctorReason) out.doctorReason = doctorReason;
+        if (recommendedTests.length) out.recommendedTests = recommendedTests;
+      }
+      else if (type==="validator"){
+        const list = [...checks.querySelectorAll(".grid3")].map(r=>{
+          const path = r.querySelector(".path").value.trim();
+          const min  = r.querySelector(".min").value;
+          const max  = r.querySelector(".max").value;
+          if (!path) return null;
+          const obj = { path };
+          if (min !== "") obj.min = Number(min);
+          if (max !== "") obj.max = Number(max);
+          return obj;
+        }).filter(Boolean);
+        out.checks = list;
+        if (doctorReason) out.doctorReason = doctorReason;
+      }
+
+      return out;
+    }
+
+    function refreshPreview(){
+      const obj = buildRule();
+      jsonPreview.value = JSON.stringify(obj, null, 2);
+    }
+
+    // live preview
+    document.addEventListener("input", refreshPreview);
+    document.addEventListener("change", refreshPreview);
+    refreshPreview();
+
+    // ----- Auth & role gate
+    onAuthStateChanged(getAuth(app), async (user)=>{
+      if (!user) {
+        roleBadge.textContent = "Not logged in";
+        roleBadge.style.background = "#fee2e2";
+        disableAll(true);
+        return;
+      }
+      const uref = doc(db, "users", user.uid);
+      const snap = await getDoc(uref);
+      const role = snap.exists() ? (snap.data().role || null) : null;
+      roleBadge.textContent = role ? `Logged in: ${user.email} • Role: ${role}` : "No role set";
+      roleBadge.style.background = role==="admin" ? "#dcfce7" : "#fef3c7";
+
+      disableAll(role!=="admin");
+    });
+
+    function disableAll(disabled){
+      for (const el of document.querySelectorAll("input,select,textarea,button")) {
+        if (el.id === "copyJson") continue;
+        el.disabled = !!disabled;
+      }
+      status.textContent = disabled ? "Admin role required to create/update rules." : "";
+    }
+
+    // ----- Save / Load / New / Duplicate
+    $("saveRule").addEventListener("click", async ()=>{
+      try {
+        const obj = buildRule();
+        if (!obj.label) throw new Error("Label is required");
+        if (!obj.id) throw new Error("Rule ID could not be derived — type a Label or ID");
+
+        await setDoc(doc(db, "rules", obj.id), obj, { merge:true });
+        status.textContent = `✅ Saved: rules/${obj.id}`;
+      } catch(e){
+        status.textContent = `❌ ${e.message}`;
+      }
+    });
+
+    $("loadRule").addEventListener("click", async ()=>{
+      const id = prompt("Enter rule ID to load (document id):");
+      if (!id) return;
+      const snap = await getDoc(doc(db, "rules", id));
+      if (!snap.exists()) return status.textContent = "❌ Not found";
+      const r = snap.data();
+
+      // populate form
+      $("ruleId").value = id;
+      $("label").value = r.label || "";
+      $("mutexGroup").value = r.mutexGroup || "";
+      $("priority").value = r.priority ?? 0;
+      $("baseScore").value = r.baseScore ?? 0;
+      $("minSatisfied").value = r.minSatisfied ?? 1;
+      $("doctorReason").value = r.doctorReason || "";
+      $("patientExplanation").value = r.patientExplanation || "";
+      $("recommendedTests").value = (r.recommendedTests||[]).join(", ");
+      $("suggestedMedicines").value = (r.suggestedMedicines||[]).join(", ");
+      $("followUpAdvice").value = r.followUpAdvice || "";
+
+      $("ruleType").value = r.type || "multi"; showBoxes();
+
+      // clear rows
+      conds.innerHTML = ""; flagConds.innerHTML = ""; checks.innerHTML = "";
+
+      if (r.type==="single"||r.type==="multi"){
+        (r.conditions||[]).forEach(()=>condRow(conds));
+        [...conds.children].forEach((row,i)=>{
+          const c = r.conditions[i]; if (!c) return;
+          row.querySelector(".section").value = c.section || "";
+          row.querySelector(".field").value   = c.field || "";
+          row.querySelector(".operator").value= c.operator || "==";
+          row.querySelector(".value").value   = Array.isArray(c.value) ? c.value.join(", ") : (c.value ?? "");
+          row.querySelector(".weight").value  = c.weight ?? "";
+        });
+      } else if (r.type==="flag"){
+        (r.conditions||[]).forEach(()=>condRow(flagConds));
+        $("flagSeverity").value = r.severity || "info";
+        [...flagConds.children].forEach((row,i)=>{
+          const c = r.conditions[i]; if (!c) return;
+          row.querySelector(".section").value = c.section || "";
+          row.querySelector(".field").value   = c.field || "";
+          row.querySelector(".operator").value= c.operator || "==";
+          row.querySelector(".value").value   = Array.isArray(c.value) ? c.value.join(", ") : (c.value ?? "");
+          row.querySelector(".weight").value  = ""; // not used for flags
+        });
+      } else if (r.type==="validator"){
+        (r.checks||[]).forEach(()=>checkRow());
+        [...checks.children].forEach((row,i)=>{
+          const c = r.checks[i]; if (!c) return;
+          row.querySelector(".path").value = c.path || "";
+          row.querySelector(".min").value  = (c.min ?? "");
+          row.querySelector(".max").value  = (c.max ?? "");
+        });
+      }
+
+      refreshPreview();
+      status.textContent = `✅ Loaded: rules/${id}`;
+    });
+
+    $("newRule").addEventListener("click", ()=>{
+      for (const id of ["ruleId","label","mutexGroup","priority","baseScore","minSatisfied","doctorReason","patientExplanation","recommendedTests","suggestedMedicines","followUpAdvice"]) {
+        $(id).value = "";
+      }
+      $("priority").value = 60;
+      $("baseScore").value = 0.4;
+      $("minSatisfied").value = 1;
+      conds.innerHTML = ""; flagConds.innerHTML = ""; checks.innerHTML = "";
+      condRow(conds); condRow(flagConds); checkRow();
+      refreshPreview();
+      status.textContent = "New rule";
+    });
+
+    $("dupRule").addEventListener("click", ()=>{
+      // Duplicate preview JSON but clear ID
+      try {
+        const obj = JSON.parse(jsonPreview.value || "{}");
+        $("ruleId").value = "";
+        $("label").value = (obj.label || "") + " (copy)";
+        refreshPreview();
+        status.textContent = "Make changes, then Save to create a copy.";
+      } catch { status.textContent = "Unable to duplicate current JSON."; }
+    });
+
+    $("copyJson").addEventListener("click", ()=>{
+      jsonPreview.select(); document.execCommand("copy");
+      status.textContent = "JSON copied to clipboard.";
+    });
+
+    // Initialize visibility
+    showBoxes();
+  </script>
+</body>
+</html>
