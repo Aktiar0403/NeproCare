@@ -150,7 +150,7 @@
       <div class="card">
         <div class="flex items-center justify-between">
           <h2 class="font-semibold">JSON Preview</h2>
-          <button id="copyJson" class="btn btn-s">Copy JSON</button>
+        <button id="copyJson" class="btn btn-s">Copy JSON</button>
         </div>
         <textarea id="jsonPreview" rows="16" class="mt-2 w-full border rounded p-2"></textarea>
       </div>
@@ -192,10 +192,10 @@
     }
     ruleType.addEventListener("change", showBoxes);
 
-    // ----- Row builders
+    // ----- Row builders (tag rows with specific classes) -----
     function condRow(container){
       const row = document.createElement("div");
-      row.className = "grid3";
+      row.className = "cond-row grid3";   // unique class
       row.innerHTML = `
         <input placeholder="section (e.g. labs)" class="border rounded p-2 section">
         <input placeholder="field (e.g. egfr)" class="border rounded p-2 field">
@@ -211,7 +211,7 @@
     }
     function checkRow(){
       const row = document.createElement("div");
-      row.className = "grid3";
+      row.className = "check-row grid3";  // unique class
       row.innerHTML = `
         <input placeholder="path (e.g. vitals.bp_sys)" class="border rounded p-2 path">
         <input placeholder="min" type="number" class="border rounded p-2 min">
@@ -226,9 +226,9 @@
     // Seed one empty row initially
     condRow(conds); condRow(flagConds); checkRow();
 
-    // ----- Build rule JSON
+    // ----- Build rule JSON (select only top-level rows) -----
     function buildRule(){
-      const type = ruleType.value;
+      const type = $("ruleType").value;
       const label = $("label").value.trim();
       const id = $("ruleId").value.trim() || slugify(label);
       const mutexGroup = $("mutexGroup").value.trim();
@@ -244,16 +244,24 @@
       const out = { id, label, type };
 
       if (type==="single" || type==="multi"){
-        const list = [...conds.querySelectorAll(".grid3")].map(r=>{
-          const section = r.querySelector(".section").value.trim();
-          const field   = r.querySelector(".field").value.trim();
-          const operator= r.querySelector(".operator").value.trim();
-          const valueRaw= r.querySelector(".value").value.trim();
-          const weight  = r.querySelector(".weight").value.trim();
+        const rows = Array.from(conds.querySelectorAll(".cond-row"));
+        const list = rows.map(r=>{
+          const sectionEl = r.querySelector(".section");
+          const fieldEl   = r.querySelector(".field");
+          const opEl      = r.querySelector(".operator");
+          const valEl     = r.querySelector(".value");
+          const wtEl      = r.querySelector(".weight");
+          if (!sectionEl || !fieldEl || !opEl || !valEl) return null;
 
-          let value = valueRaw;
-          if (operator === "in") value = arrFromCSV(valueRaw);
-          else value = toNumberOrRaw(valueRaw);
+          const section = sectionEl.value.trim();
+          const field   = fieldEl.value.trim();
+          const operator= opEl.value.trim();
+          const valueRaw= valEl.value.trim();
+          const weight  = wtEl?.value.trim();
+
+          let value = operator === "in"
+            ? arrFromCSV(valueRaw)
+            : toNumberOrRaw(valueRaw);
 
           if (!section || !field || !operator || value === "") return null;
           return { section, field, operator, value, ...(weight ? {weight:Number(weight)} : {}) };
@@ -271,31 +279,51 @@
         if (followUpAdvice) out.followUpAdvice = followUpAdvice;
       }
       else if (type==="flag"){
-        const list = [...flagConds.querySelectorAll(".grid3")].map(r=>{
-          const section = r.querySelector(".section").value.trim();
-          const field   = r.querySelector(".field").value.trim();
-          const operator= r.querySelector(".operator").value.trim();
-          const valueRaw= r.querySelector(".value").value.trim();
-          let value = (operator==="in") ? arrFromCSV(valueRaw) : toNumberOrRaw(valueRaw);
-        if (!section || !field || !operator || value === "") return null;
+        const flagRows = Array.from(flagConds.querySelectorAll(".cond-row"));
+        const list = flagRows.map(r=>{
+          const sectionEl = r.querySelector(".section");
+          const fieldEl   = r.querySelector(".field");
+          const opEl      = r.querySelector(".operator");
+          const valEl     = r.querySelector(".value");
+          if (!sectionEl || !fieldEl || !opEl || !valEl) return null;
+
+          const section = sectionEl.value.trim();
+          const field   = fieldEl.value.trim();
+          const operator= opEl.value.trim();
+          const valueRaw= valEl.value.trim();
+
+          let value = operator === "in"
+            ? arrFromCSV(valueRaw)
+            : toNumberOrRaw(valueRaw);
+
+          if (!section || !field || !operator || value === "") return null;
           return { section, field, operator, value };
         }).filter(Boolean);
+
         out.severity = $("flagSeverity").value;
         out.conditions = list;
         if (doctorReason) out.doctorReason = doctorReason;
         if (recommendedTests.length) out.recommendedTests = recommendedTests;
       }
       else if (type==="validator"){
-        const list = [...checks.querySelectorAll(".grid3")].map(r=>{
-          const path = r.querySelector(".path").value.trim();
-          const min  = r.querySelector(".min").value;
-          const max  = r.querySelector(".max").value;
+        const checkRows = Array.from(checks.querySelectorAll(".check-row"));
+        const list = checkRows.map(r=>{
+          const pathEl = r.querySelector(".path");
+          if (!pathEl) return null;
+          const minEl  = r.querySelector(".min");
+          const maxEl  = r.querySelector(".max");
+
+          const path = pathEl.value.trim();
+          const min  = minEl?.value;
+          const max  = maxEl?.value;
           if (!path) return null;
+
           const obj = { path };
           if (min !== "") obj.min = Number(min);
           if (max !== "") obj.max = Number(max);
           return obj;
         }).filter(Boolean);
+
         out.checks = list;
         if (doctorReason) out.doctorReason = doctorReason;
       }
@@ -304,8 +332,12 @@
     }
 
     function refreshPreview(){
-      const obj = buildRule();
-      jsonPreview.value = JSON.stringify(obj, null, 2);
+      try {
+        const obj = buildRule();
+        jsonPreview.value = JSON.stringify(obj, null, 2);
+      } catch (e) {
+        jsonPreview.value = `/* Error building JSON: ${e.message} */`;
+      }
     }
 
     // live preview
@@ -344,7 +376,12 @@
         const obj = buildRule();
         if (!obj.label) throw new Error("Label is required");
         if (!obj.id) throw new Error("Rule ID could not be derived — type a Label or ID");
-
+        if ((obj.type==="single"||obj.type==="multi") && (!obj.conditions || !obj.conditions.length)) {
+          throw new Error("Add at least one condition");
+        }
+        if (obj.type==="validator" && (!obj.checks || !obj.checks.length)) {
+          throw new Error("Add at least one check");
+        }
         await setDoc(doc(db, "rules", obj.id), obj, { merge:true });
         status.textContent = `✅ Saved: rules/${obj.id}`;
       } catch(e){
@@ -379,7 +416,7 @@
 
       if (r.type==="single"||r.type==="multi"){
         (r.conditions||[]).forEach(()=>condRow(conds));
-        [...conds.children].forEach((row,i)=>{
+        Array.from(conds.querySelectorAll(".cond-row")).forEach((row,i)=>{
           const c = r.conditions[i]; if (!c) return;
           row.querySelector(".section").value = c.section || "";
           row.querySelector(".field").value   = c.field || "";
@@ -390,17 +427,17 @@
       } else if (r.type==="flag"){
         (r.conditions||[]).forEach(()=>condRow(flagConds));
         $("flagSeverity").value = r.severity || "info";
-        [...flagConds.children].forEach((row,i)=>{
+        Array.from(flagConds.querySelectorAll(".cond-row")).forEach((row,i)=>{
           const c = r.conditions[i]; if (!c) return;
           row.querySelector(".section").value = c.section || "";
           row.querySelector(".field").value   = c.field || "";
           row.querySelector(".operator").value= c.operator || "==";
           row.querySelector(".value").value   = Array.isArray(c.value) ? c.value.join(", ") : (c.value ?? "");
-          row.querySelector(".weight").value  = ""; // not used for flags
+          // no weight for flags
         });
       } else if (r.type==="validator"){
         (r.checks||[]).forEach(()=>checkRow());
-        [...checks.children].forEach((row,i)=>{
+        Array.from(checks.querySelectorAll(".check-row")).forEach((row,i)=>{
           const c = r.checks[i]; if (!c) return;
           row.querySelector(".path").value = c.path || "";
           row.querySelector(".min").value  = (c.min ?? "");
@@ -426,7 +463,6 @@
     });
 
     $("dupRule").addEventListener("click", ()=>{
-      // Duplicate preview JSON but clear ID
       try {
         const obj = JSON.parse(jsonPreview.value || "{}");
         $("ruleId").value = "";
