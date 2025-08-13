@@ -4,6 +4,7 @@ import { getAuth }        from "https://www.gstatic.com/firebasejs/10.12.4/fireb
 import { getFirestore }   from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 import { getStorage }     from "https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js";
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCWhUZtbVdP777Uzsmc_Rf4Vbiiq48sBFw",
   authDomain: "nephrocare-3e13e.firebaseapp.com",

@@ -13,14 +13,14 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase
 // Real Auth instance
 const auth = getAuth(app);
 
-// DOM
+// DOM elements present in your header
 const bar       = document.getElementById("auth-bar");
 const emailEl   = document.getElementById("email");
 const passEl    = document.getElementById("password");
 const loginBtn  = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 
-// Google button
+// Add a Google Sign-in button programmatically
 const googleBtn = document.createElement("button");
 googleBtn.type = "button";
 googleBtn.id = "google-btn";
@@ -58,6 +58,7 @@ function setLoggedOutUI() {
   logoutBtn?.classList.add("hidden");
   whoBadge.textContent = "";
   note.textContent = "";
+  note.removeAttribute("style");
 }
 
 function setLoggedInUI(user, userRole) {
@@ -68,16 +69,19 @@ function setLoggedInUI(user, userRole) {
   logoutBtn?.classList.remove("hidden");
 
   whoBadge.textContent = `Logged in: ${user.email || user.displayName || user.uid}${userRole ? " • Role: " + userRole : ""}`;
+
   if (!userRole) {
     note.textContent = " (No role set — ask admin to create users/{uid} with role: 'doctor' or 'admin')";
-    note.style.color = "#b45309";
+    note.style.color = "#b45309"; // amber-700
   } else if (userRole === "user") {
     note.textContent = " Read-only access (user). Doctors can save visits.";
     note.style.color = "#2563eb";
   } else {
     note.textContent = "";
+    note.removeAttribute("style");
   }
 
+  // Expose for quick console debugging
   window.currentUser = user;
   window.currentUserRole = userRole || null;
 }
@@ -102,9 +106,9 @@ logoutBtn?.addEventListener("click", async () => {
   await signOut(auth);
 });
 
-// Auth state
+// Auth state + role lookup
 onAuthStateChanged(auth, async (user) => {
   if (!user) return setLoggedOutUI();
-  const userRole = await fetchUserRole(user.uid); // <-- keep scoped
+  const userRole = await fetchUserRole(user.uid);  // 'admin' | 'doctor' | 'user' | null
   setLoggedInUI(user, userRole);
 });
